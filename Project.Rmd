@@ -13,6 +13,98 @@ library(tidyverse)
 library(naniar)
 library(editrules)
 library(ggplot2)
+library(kableExtra)
 library(tibble)
 library(visdat)
+library(frequency)
+library(simputation)
+library(classInt)
+```
+
+```{r}
+boxplot(Lidl$Sales, main = "Sales Outliers") 
+  boxplot(Lidl$Quantity, main = "Quantity Outliers")
+  boxplot(Lidl$Profit, main = "Profit Outliers")
+
+
+```
+
+
+```{r}
+  lidlclean <- Lidl %>% select(-ind1, -ind2) 
+
+numeric_columns <- sapply(lidlclean, is.numeric)
+numeric_data <- lidlclean[, numeric_columns]
+par(mfrow = c(1, sum(numeric_columns)))  
+for (col in names(numeric_data)) {
+  boxplot(numeric_data[[col]], main = col)
+}
+```
+
+
+
+```{r}
+lidlcleaner <- imputate_outlier(lidlclean, Profit, method = "median")
+summary(lidlcleaner)
+
+```
+
+```{r}
+lidlclean %>%
+count(Segment)
+```
+
+```{r}
+lidlclean %>%
+count(State, sort = TRUE)
+```
+
+```{r}
+lidlclean %>%
+count(Customer.Name, sort = TRUE)
+```
+
+```{r}
+  lidlclean <- Lidl %>% select(-ind1, -ind2)
+  ggplot(lidlclean, aes(x = Order.Date, y = Profit)) +
+    geom_line()
+  
+
+```
+``` {r}
+
+  
+
+```
+
+
+
+
+```{r} 
+lidlclean <- Lidl %>% select(-ind1, -ind2)
+  ggplot(lidlclean, aes(x = Order.Date, y = Sales)) +
+    geom_boxplot()
+```
+
+
+```{r} 
+Lidl$State <- as.factor(Lidl$State)
+Lidl$Segment <- as.factor(Lidl$Segment)
+Lidl$Quantity <- factor(Lidl$Quantity,ordered=TRUE)
+attach(Lidl)
+Lidl$Profit <- as.numeric(Lidl$Profit)
+Lidl$Sales <- as.numeric(Lidl$Sales)
+print(Lidl)
+```
+
+
+```{r tai, echo=TRUE} 
+
+tab1<-classIntervals(lidlcleaner,n=10,style="pretty")
+jenks.tests(tab1)
+
+limits<-cut(lidlcleaner,seq(-40,70,by=11))
+tabela1<-freq(limits,type="html")
+kbl(tabela1) %>%
+    kable_material(c("striped", "hover"))
 ```
