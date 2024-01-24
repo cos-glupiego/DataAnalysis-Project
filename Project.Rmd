@@ -1,16 +1,16 @@
 ---
-title: "Project"
-output:
-
-  html_document: 
-    highlight: espresso
-    theme: united
+title: "American Lidl"
+author: "Marta Szczerska, Oskar Rabazynski"
+date: "`r Sys.Date()`"
+output: 
+  prettydoc::html_pretty:
+    theme: cayman
 ---
 
 ```{r include=FALSE}
 download.file("https://github.com/cos-glupiego/DataAnalysis-Project/blob/49882f1a0f33f56a62610c276a9848d04758ca60/Lidl.csv?raw=true", destfile = "lidl.csv", mode="wb")
 Lidl <- read.csv("lidl.csv")
-
+library(prettydoc)
 library(dplyr)
 library(tidyverse)
 library(naniar)
@@ -47,6 +47,8 @@ library(dlookr)
 
 ### Introduction
 
+*This report presents an analysis of data from Lidl chain stores across the United States. We have examined various metrics, such as profitability, sales, payment methods, and return rates, to gather insights essential for strategic planning and decision-making. The report includes a series of plots and graphs that provide a clear view of financial performance across different regions and customer segments.*
+
 ### Data visualization, wrangling and cleansing
 
 ```{r include=FALSE}
@@ -62,7 +64,9 @@ boxplot(Lidl$Sales, main = "Sales Outliers")
   boxplot(Lidl$Profit, main = "Profit Outliers")
 ```
 
-## Imputation of Outliers in the variable Profit 
+Boxplots based on variables "Sales", "Quantity" and "Profit" show that the data set contains high amount of outliers. In that case standard deviation can be to high in order to provide accurate results from statistical tests. In order to improve the research imputation of outliers need to be conducted
+
+## Imputation of Outliers in the variable Profit
 
 ```{r Imputation of Profit, echo=FALSE, cache=TRUE}
 lidlcleaner <- lidlclean %>%
@@ -77,6 +81,8 @@ summary(lidlcleaner$Profit)
 summary(lidlcleaner$Sales)
 ```
 
+After imputation of outliers data set no longer contains high standard deviation and standard errors
+
 ## Checking wether there are any missing values in the numerical variables
 
 ```{r Checking for missing values}
@@ -84,6 +90,9 @@ any_na(lidlcleaner$Profit)
 any_na(lidlcleaner$Sales)
 any_na(lidlcleaner$Quantity)
 ```
+
+Data does not contain any missing values that could impact the results of tests.
+
 ## Visualisation of imputated variables
 
 ```{r echo=FALSE}
@@ -115,6 +124,16 @@ lines(density(Profit[Segment == "Corporate"]), col = 4)
 legend("topright", legend = c("Home Office", "Consumer", "Corporate"),
        col = c(2, 3, 4), lty = 1:2, horiz = FALSE, box.lty = 0, cex = 0.8)
 ```
+
+The histogram shows the frequency of profit levels across the dataset. The bars represent actual profit data points, with the height indicating the number of occurrences at each profit level.
+
+The peak of the Consumer segment's density curve suggests that the most common profit level is slightly above zero, indicating that most consumer transactions are marginally profitable. The right skew of the curve suggests there are fewer instances of higher profits.
+
+The Corporate segment's curve is broader and flatter than the Consumer's, indicating a wider range of profit levels. It shows that Corporate transactions have a more variable profit outcome with a similar right skew, suggesting a possibility of higher profits, albeit less frequently.
+
+The Home Office segment's curve is the broadest, indicating the highest variability in profit levels among the three segments. It also shows a skew towards the right, implying the potential for high-profit transactions.
+
+This plot suggests that while most transactions across all segments do not contribute significantly to profit, there is a potential for substantial profits in less frequent, high-value transactions, especially within the Corporate and Home Office segments.
 
 ## Distibution of profit in each of segments of company
 
@@ -166,6 +185,30 @@ select(Category, Profit)%>%
 
 ```
 
+Density Plots by Customer Segment
+
+This plot presents density plots for three different customer segments: Consumer, Corporate, and Home Office.
+
+For Consumer - the plot shows a sharp peak around the zero profit mark, indicating that most consumer transactions have a small profit margin. The distribution has thin tails, showing that there are fewer transactions with large profits or losses.
+
+For Corporate - similar to the Consumer segment, there's a sharp peak around zero. However, the tails are thicker, suggesting that there are more transactions with significant profits or losses compared to the Consumer segment.
+
+For Home Office - this segment also shows a central peak, with a distribution that is slightly broader than the Consumer segment, indicating a wider range of profit outcomes.
+
+Raincloud Plots by Product Category
+
+Raincloud plots combine box plots, violin plots, and dot plots, for three product categories: Technology, Office Supplies, and Furniture.
+
+For Technology - the dot plot shows a wide spread of profit outcomes, with several outliers suggesting a few transactions with very high profits. The box plot indicates that the median profit is above zero, while the violin plot shows a wide distribution, suggesting a high variability in profit.
+
+For Office Supplies - The distribution of profits is narrower than Technology, with fewer outliers, suggesting more consistency in profit margins. The median profit appears to be around zero, with a small interquartile range.
+
+For Furniture - The plot shows a similar pattern to Office Supplies, with a narrow spread of profits and a median close to zero. However, there appears to be a slightly wider range of outcomes than Office Supplies.
+
+Conclusion
+
+Technology is the most variable category, with a significant potential for high profits, but also a risk of losses. Office Supplies and Furniture have more consistent profit margins but less potential for high profits. Corporate and Home Office segments have a greater variability in profit outcomes than the Consumer segment.
+
 ## Most profits made by Lidl company grouped by states
 
 ```{r echo=FALSE, message=FALSE, warning=FALSE}
@@ -188,7 +231,16 @@ plot1 <- ggplot(lidlcleaner, aes(Profit, Category)) +
 plot1 + facet_wrap(~Segment)
 ```
 
+A summary table, which lists the top 10 states by a sum value, representing total profits. California leads, followed by New York and Washington, indicating that these states are significant contributors to the total.
+
+The scatter plots depict individual profit data points for transactions within each customer segment and product category.
+
+There is a notable spread of profits across all segments and categories, with some transactions yielding high profits and others resulting in losses, as indicated by points below the zero line.
+
+The distribution of data points suggests variability in profitability, with no single cluster indicating a consistent profit level across categories.
+
 ### Univariate analysis
+
 ## Table of profits in different regions
 
 ```{r echo=FALSE}
@@ -210,6 +262,26 @@ lidlcleaner %>%
   row_spec(c(1,3), bold = T, color = "white", background = "#D7261E")
 ```
 
+The table presents statistical measures for profit data across four regions: Central, East, South, and West.
+
+Central Region
+
+Has the lowest mean profit but a moderate range of profit values, as indicated by the standard deviation. The positive skewness indicates that there are more high-profit outliers, and the kurtosis value suggests a relatively peaked distribution.
+
+East Region
+
+Similar to the Central region in terms of mean profit, but with a slightly higher standard deviation and less positive skewness. The kurtosis is lower, suggesting a less peaked distribution.
+
+South Region
+
+Shows the lowest mean profit and the highest standard deviation, indicating the most variability in profit. It has a positive skewness, though less pronounced than in Central, and a negative kurtosis, which suggests a flatter distribution with fewer outliers.
+
+West Region
+
+Has the highest mean profit and a lower standard deviation than the South, suggesting more consistent profit values. The skewness is also positive, but less so than in Central or East, and the kurtosis is similar to East, indicating a moderately peaked distribution.
+
+The median values across all regions are lower than the means, which, together with the positive skewness, suggest that the profit distributions are right-skewed, with more transactions yielding lower profits and fewer transactions yielding higher profits.
+
 ## Descriptive Statistics grouped by the regions of USA
 
 ```{r echo=FALSE}
@@ -228,6 +300,32 @@ stby(data = subset_data,
   kable_styling(bootstrap_options = c("striped", "hover"))
 ```
 
+Profit
+
+All regions have similar minimum and maximum profit values, suggesting that they all have the potential for both significant losses and gains.
+
+The median profit is the highest in the West, indicating that over half of the transactions in that region are more profitable than the other regions.
+
+The first quartile (q1) for profit is negative in all regions, which means at least 25% of transactions are operating at a loss.
+
+The third quartile (q3) values, representing the profit level below which 75% of the data fall, suggest that the top 25% of transactions are considerably more profitable, especially in the West.
+
+Quantity
+
+Quantity sold has the same range (min 1 to max 14) across all regions, with medians all at 3, indicating a uniform distribution of transaction volume.
+
+Sales
+
+The West region has the highest median sales, as well as the highest minimum and maximum values, suggesting that the West has the highest sales values overall.
+
+The East and South have similar sales distribution, with the South having a slightly higher median.
+
+Conclusion
+
+The data indicates that while there is potential for both losses and gains across all regions, the frequency and magnitude of profitable transactions vary, with the West exhibiting a more favorable profit distribution.
+
+The consistent quantity distribution suggests that differences in profit are not due to the volume of products sold but could be influenced by other factors such as product mix, pricing strategies, or operational efficiencies.
+
 ### Bivariate Analysis
 
 ## Correlation between each numerical variable
@@ -244,8 +342,28 @@ ggcorrmat(
 )
 ```
 
+Profit and Quantity
+
+The correlation coefficient is 0.51, suggesting a moderate positive relationship between profit and quantity. As quantity increases, there is a tendency for profit to increase as well.
+
+Profit and Sales
+
+The correlation coefficient is 0.22, indicating a weak positive relationship. This suggests that higher sales are somewhat associated with higher profits, but the relationship is not strong.
+
+Quantity and Sales
+
+The correlation coefficient is 0.21, which is another weak positive correlation. This indicates that there is a slight tendency for transactions with a higher quantity of items to have higher sales.
+
+Conclusion
+
+The correlation values suggest that while there is some positive association between these variables, they are not strongly linked. This indicates that other factors not represented in this correlogram influence profit and sales.
+
+The moderate correlation between profit and quantity could be influenced by economies of scale, where selling more units may lead to lower costs per unit and hence more profit.
+
+The weak correlation between sales and profit implies that simply increasing sales does not guarantee a proportionate increase in profit. This could be due to a variety of factors such as the mix of products sold, varying profit margins, or differing costs associated with the sales.
 
 ### Statistical Inference
+
 ## Test for independent samples
 
 ```{r echo=FALSE}
@@ -260,7 +378,33 @@ ggbetweenstats(
 
 ```
 
-pvalue is near zero what indicates that the mean profit of categories of the products differ significantly
+Kruskal-Wallis Test
+
+This non-parametric test has been used to determine if there are statistically significant differences between the groups. The test statistic is given as 227.31, and the p-value is near zero, indicating that differences in profit distributions across these categories are statistically significant.
+
+Median Profit
+
+The line within the box plot represents the median profit for each category. It is apparent that the median profit for Technology is higher than that of the other two categories, which have medians around the zero line.
+
+Interquartile Range
+
+The length of the box represents the interquartile range (from the first quartile, Q1, to the third quartile, Q3), showing the middle 50% of profits for each category. The Technology category has the widest box, indicating a greater variability in profits compared to Furniture and Office Supplies.
+
+Whiskers
+
+These lines extending from the boxes indicate the range of the data, excluding outliers. The whiskers for the Technology category are much longer, further indicating the high variability in profits.
+
+Outliers - there are noticeable outliers in the Technology category, indicating some very profitable transactions.
+
+Swarm Plot Points: The individual points plotted in a 'swarm' fashion show the distribution and density of profit data for each category.
+
+Conclusion
+
+The Technology category not only has a higher median profit but also a higher range of profits, including several outliers indicating extremely profitable transactions.
+
+Furniture and Office Supplies have similar median profits near zero, but the spread of profits in Office Supplies is larger than in Furniture, indicating more variability.
+
+The significant p-value from the Kruskal-Wallis test suggests that these differences are not due to chance, and there is a true variation in how these categories contribute to overall profit.
 
 ```{r echo=FALSE}
 ggbetweenstats(
@@ -274,7 +418,13 @@ ggbetweenstats(
 
 ```
 
-pvalue is above the level of 0.05 what indicates that the payment mode does not differ in the amount of Profit made
+Kruskal-Wallis Test - The test statistic is 0.99 with a p-value of 0.61, which is well above the alpha level of 0.05. This indicates there is no statistically significant difference in the distribution of profit between the different payment modes.
+
+The distribution of profit for transactions using cards shows a median close to zero, with a relatively symmetric distribution of data points around the median.
+
+The median profit for COD transactions is slightly higher than for cards, but the overall distribution is similar, with a wide range of profits and losses indicated by the spread of the data points.
+
+The distribution for online payments is also centered around a median profit close to zero. The data points indicate a range of profits similar to cards and COD.
 
 ```{r echo=FALSE}
 grouped_gghistostats(
@@ -294,6 +444,20 @@ grouped_gghistostats(
 )
 ```
 
+Consumer Segment
+
+The density curve and histogram indicate a concentration of profit around the zero mark, with some spread into both the loss and gain sides. This suggests that consumer transactions frequently yield small profits or losses. The distribution appears to be slightly right-skewed, with a small tail extending towards higher profits.
+
+Corporate Segment
+
+This segment also shows a concentration of profit around zero but with a wider spread compared to the Consumer segment. This indicates more variability in the profit of corporate transactions. The skewness seems more pronounced, suggesting that while most corporate transactions have modest profits, there's a possibility for higher profits as well.
+
+Home Office Segment
+
+The distribution in this segment is similar to the Corporate segment, with a wide spread and a noticeable right skew. However, the frequency of high-profit transactions seems less compared to the Corporate segment.
+
+The t-test statistics and corresponding p-values for each segment suggest that the means of these distributions are significantly different from zero. This is also supported by the Bayes Factor values, which provide the likelihood ratio for the alternative hypothesis over the null hypothesis. A Bayes Factor greater than one suggests that the alternative hypothesis is more likely.
+
 ```{r echo=FALSE}
 Lidl2<-lidlcleaner%>%
   mutate(Returns1=ifelse(Returns==1,1,0))
@@ -307,7 +471,11 @@ ggbetweenstats(
 
 ```
 
-Pvalue not significant
+The left plot represents transactions without returns, and the right plot transactions with returns.
+
+The median profit for transactions without returns is slightly above zero, suggesting that these transactions are generally profitable, albeit with a small margin. The median profit for transactions with returns is lower and closer to zero, indicating that returns may have a negative impact on profitability. Both distributions exhibit a wide range of values, including some transactions with high profits and others with significant losses.
+
+The broader range of the violin plot for transactions with returns suggests greater variability in profit when returns are involved. The p-value is not significant, which suggests that the difference in the median profits between transactions with and without returns is not statistically significant, which is also supported by the Kruskal-Wallis test.
 
 ```{r echo=FALSE}
 Lidl2$Returns1 <- factor(Lidl2$Returns1,labels = c("No Returns","Returns"))
@@ -322,7 +490,19 @@ ggpiestats(
 
 ```
 
-There is a significant difference in number of returns made between regions as pvalue is below 0.05. There is also significant difference between regions as proportions of returns differ among them.
+No Returns Pie Chart shows the proportion of transactions without returns in each region. The Central region accounts for the largest share (31%), followed by the East (29%), West (24%), and South (16%).
+
+Returns Pie Chart presents the proportion of transactions with returns. The West region accounts for a significant majority (68%), while the other regions account for much smaller proportions (East 17%, South 11%, and Central 4%).
+
+Chi-Square Test for No Returns is 153.97 with a p-value of approximately 0, indicating a significant difference in the distribution of transactions without returns across regions.
+
+Chi-Square Test for Returns is 286.68 with a p-value of approximately 0, suggesting a significant difference in the distribution of transactions with returns across regions.
+
+Both tests show a Cramer's V value of 0.16, which, despite the statistical significance, indicates a relatively weak association in terms of the effect size.
+
+Conclusion:
+
+The significant chi-square test results indicate that the distribution of transactions, both with and without returns, is not uniform across regions.
 
 ```{r echo=FALSE}
 ggbarstats(
@@ -335,3 +515,17 @@ ggbarstats(
 
 )
 ```
+
+In Central Region, the largest proportion of payments is made with COD at 40%, followed closely by Online payments at 39%, and Cash payments account for 22%. In East Region, COD is also the most common payment mode at 41%, with Online at 35% and Cash at 24%. In South Region, COD constitutes the majority at 48%, Online payments drop to 32%, and Cash remains the least common at 22%. In West Region, Online payments and COD are equally prevalent at 39% each, while Cash payments are slightly less common at 20%.
+
+The p-values for each region are well below the 0.05 threshold, suggesting that the differences in payment mode usage between the regions are statistically significant.
+
+The chi-square test statistic (χ²) is not explicitly stated for each region but given the low p-values, it is clear the differences are statistically significant.
+
+#Conclusion
+
+The data indicates a preference for COD across all regions, with it being the most common or joint most common payment mode in each area.
+
+Online payments are also popular, especially in the Central and West regions where they are nearly as common as COD.
+
+Cash is consistently the least preferred method across all regions, never exceeding a quarter of the payments.
