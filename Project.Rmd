@@ -1,14 +1,16 @@
 ---
 title: "Project"
 output:
-  html_document: default
-  pdf_document: default
+
+  html_document: 
+    highlight: espresso
+    theme: united
 ---
 
 ```{r include=FALSE}
 download.file("https://github.com/cos-glupiego/DataAnalysis-Project/blob/49882f1a0f33f56a62610c276a9848d04758ca60/Lidl.csv?raw=true", destfile = "lidl.csv", mode="wb")
 Lidl <- read.csv("lidl.csv")
-library(dlookr)
+
 library(dplyr)
 library(tidyverse)
 library(naniar)
@@ -18,9 +20,7 @@ library(tibble)
 library(summarytools)
 library(visdat)
 library(simputation)
-library(kableExtra)
 library(ggdist)
-
 library(qwraps2)
 library(arsenal)
 library(e1071)
@@ -40,80 +40,60 @@ library(AER)
 library(ggstatsplot)
 library(report)
 library(ggthemes)
+library(kableExtra)
+library(dlookr)
+
 ```
 
-```{r}
+### Introduction
+
+### Data visualization, wrangling and cleansing
+
+```{r include=FALSE}
+lidlclean <- Lidl %>%
+  select(-ind1, -ind2)
+```
+
+## Visualisation of Outliers in the Lidl dataset
+
+```{r Outliers detection, echo=FALSE}
 boxplot(Lidl$Sales, main = "Sales Outliers") 
   boxplot(Lidl$Quantity, main = "Quantity Outliers")
   boxplot(Lidl$Profit, main = "Profit Outliers")
-
-
 ```
 
-```{r}
-  lidlclean <- Lidl %>% select(-ind1, -ind2) 
+## Imputation of Outliers in the variable Profit 
 
-numeric_columns <- sapply(lidlclean, is.numeric)
-numeric_data <- lidlclean[, numeric_columns]
-par(mfrow = c(1, sum(numeric_columns)))  
-for (col in names(numeric_data)) {
-  boxplot(numeric_data[[col]], main = col)
-}
-```
-
-```{r}
+```{r Imputation of Profit, echo=FALSE, cache=TRUE}
 lidlcleaner <- lidlclean %>%
   mutate(Profit=imputate_outlier(lidlclean, Profit, method = "capping", cap_ntiles=c(0.1, 0.9), no_attrs = TRUE))
-summary(lidlcleaner)
+summary(lidlcleaner$Profit)
 ```
 
-```{r}
-boxplot(lidlcleaner$Profit)
+## Imputation of Outliers in the variable Sales
 
-```
-```{r}
-lidlcleaner$Quantity <- as.numeric(lidlcleaner$Quantity)
-```
-```{r include=FALSE}
-lidlclean %>%
-count(Segment)
+```{r Imputation of Sales Outliers, echo=FALSE}
+  lidlcleaner$Sales <- imputate_outlier(lidlclean, Sales, method = "capping", cap_ntiles=c(0.1, 0.9), no_attrs = TRUE)
+summary(lidlcleaner$Sales)
 ```
 
-```{r include=FALSE}
-lidlclean %>%
-count(State, sort = TRUE)
+## Checking wether there are any missing values in the numerical variables
+
+```{r Checking for missing values}
+any_na(lidlcleaner$Profit)
+any_na(lidlcleaner$Sales)
+any_na(lidlcleaner$Quantity)
+```
+## Visualisation of imputated variables
+
+```{r echo=FALSE}
+boxplot(lidlcleaner$Profit, main = "Profit Outliers after imputation")
+boxplot(lidlcleaner$Sales, main = "Sales Outliers after imputation")
 ```
 
-```{r include=FALSE}
-lidlclean %>%
-count(Customer.Name, sort = TRUE)
-```
+## The distribution of mainly examined variable profit
 
-```{r}
-  lidlcleaner <- Lidl %>% select(-ind1, -ind2)
-  ggplot(lidlcleaner, aes(x = Order.Date, y = Profit)) +
-    geom_line()
-  
-
-```
-
-```{r}
-lidlclean <- Lidl %>% select(-ind1, -ind2)
-  ggplot(lidlclean, aes(x = Order.Date, y = Sales)) +
-    geom_boxplot()
-```
-
-```{r include=FALSE}
-Lidl$State <- as.factor(Lidl$State)
-Lidl$Segment <- as.factor(Lidl$Segment)
-Lidl$Quantity <- factor(Lidl$Quantity,ordered=TRUE)
-attach(Lidl)
-Lidl$Profit <- as.numeric(Lidl$Profit)
-Lidl$Sales <- as.numeric(Lidl$Sales)
-print(Lidl)
-```
-
-```{r tai, echo=FALSE, message=FALSE, warning=FALSE}
+```{r tai, echo=FALSE, message=FALSE, warning=FALSE, paged.print=TRUE}
 tab1<-classIntervals(lidlcleaner$Profit,n=10,style="kmeans")
 jenks.tests(tab1)
 
@@ -123,22 +103,28 @@ kbl(tabela1) %>%
   kable_material(c("striped", "hover"))
 ```
 
-```{r histogram, message=FALSE, warning=FALSE}
+## Graphical visualization of Profit among different segments in the company
+
+```{r histogram, echo=FALSE, message=FALSE, warning=FALSE}
 attach(Lidl)
-hist(lidlcleaner$Profit, breaks="FD", col="green", probability = TRUE,
-     main="Lidl - profit",xlim=c(-40,70))
-lines(density(Profit[Segment=="Home Office"]),col=2)
-lines(density(Profit[Segment=="Consumer"]),col=3)
-lines(density(Profit[Segment=="Corporate"]),col=4)
-legend("topright", legend=c("Home Office", "Consumer", "Corporate"),
-       col=c(2,3,4), lty=1:2, horiz=FALSE, box.lty=0, cex=0.8)
+hist(lidlcleaner$Profit, breaks = "FD", col = "green", probability = TRUE,
+     main = "Lidl - profit", xlim = c(-40, 70), xlab = "Profit")
+lines(density(Profit[Segment == "Home Office"]), col = 2)
+lines(density(Profit[Segment == "Consumer"]), col = 3)
+lines(density(Profit[Segment == "Corporate"]), col = 4)
+legend("topright", legend = c("Home Office", "Consumer", "Corporate"),
+       col = c(2, 3, 4), lty = 1:2, horiz = FALSE, box.lty = 0, cex = 0.8)
 ```
 
-```{r}
-ggplot(data=lidlcleaner,aes(x=Profit)) +
-  geom_histogram(bins=10) +
-  facet_wrap(~Segment)
+## Distibution of profit in each of segments of company
+
+```{r echo=FALSE}
+ggplot(data = lidlcleaner[lidlcleaner$Profit != 0, ], aes(x = Profit)) +
+  geom_density() +
+  facet_wrap(~ Segment)
 ```
+
+## Distribution of profit grouped by the category of products sold
 
 ```{r echo=FALSE}
 lidlcleaner%>% 
@@ -171,18 +157,18 @@ select(Category, Profit)%>%
   ) +
 # Themes and Labels
   labs(
-    title = "RainCloud Plot on profits made by the category of produc",
+    title = "RainCloud Plot on profits made by the category of product",
     x = "Product Category",
     y = "Profit",
-    fill = "rooms"
+    fill = "Category"
   ) +
   coord_flip()
 
 ```
 
+## Most profits made by Lidl company grouped by states
 
-
-```{r message=FALSE, warning=FALSE}
+```{r echo=FALSE, message=FALSE, warning=FALSE}
 lidlcleaner %>%
   select(State,Profit) %>%
   group_by(State)%>%
@@ -193,6 +179,8 @@ lidlcleaner %>%
 
 ```
 
+## Graphical visualization of Profits made on different types of product grouped by company's segments
+
 ```{r facet1, echo=FALSE}
 plot1 <- ggplot(lidlcleaner, aes(Profit, Category)) + 
   geom_abline() +
@@ -200,91 +188,67 @@ plot1 <- ggplot(lidlcleaner, aes(Profit, Category)) +
 plot1 + facet_wrap(~Segment)
 ```
 
-# Issue with kniting
+### Univariate analysis
+## Table of profits in different regions
 
-```{r kable_report2, echo=FALSE, message=FALSE, warning=FALSE}
-raport <-
-  list("Profits" =
-       list("Min"       = ~ min(Profit),
-            "Max"       = ~ max(Profit),
-            "Q1"        = ~ quantile(Profit,0.25),
-            "Median" = ~ round(median(Profit),2),
-            "Q3"        = ~ round(quantile(Profit,0.75),2),
-            "Mean" = ~ round(mean(Profit),2),
-            "Sd" = ~ round(sd(Profit),2),
-             "IQR" = ~ round(iqr(Profit),2),
-            "Sx" = ~ round(iqr(Profit)/2,2),
-            "Var %" = ~ round((sd(Profit)/mean(Profit)),2),
-            "IQR Var %" = ~ round((iqr(Profit)/median(Profit)),2),
-            "Skewness" = ~  round(skew(Profit),2),
-             "Kurtosis" = ~  round(kurtosi(Profit),2)
-            ))
-tabela<-summary_table(lidlcleaner, summaries = raport, by = c("Region"))
-
-kbl(tabela, digits = 2,
-  caption="Table 1. Profit made in each of regions.(in $$$)") %>% kable_classic(full_width = F, html_font = "Cambria")%>% kable_styling(bootstrap_options = c("striped", "hover"))
+```{r echo=FALSE}
+lidlcleaner %>% 
+  select(Profit,Region) %>%
+  group_by(Region) %>%
+  dplyr::summarize(Min=min(Profit),
+            Max=max(Profit),
+            Mean=mean(Profit),
+            Std_Deviation = sd(Profit),
+            Median = median(Profit),
+            Q1 =quantile(Profit,0.25),
+            Q3 =quantile(Profit,0.75),
+            Skewness=skew(Profit),
+            Kurtosis=kurtosi(Profit)) %>%
+  kbl() %>%
+  kable_paper("striped", full_width = FALSE) %>%
+  column_spec(1:2, bold = T) %>%
+  row_spec(c(1,3), bold = T, color = "white", background = "#D7261E")
 ```
 
-```{r}
-lidlcleaner %>%
-  select(Profit,State) %>%
-  tbl_summary(label= Profit ~ "Profit",digits=c(Profit)~2,by=State,type = all_continuous() ~ "continuous2", statistic = all_continuous() ~ c("{N_nonmiss}", "{median} ({p25}, {p75})", "{min}, {max}"),missing = "no") 
-```
+## Descriptive Statistics grouped by the regions of USA
 
-# No display
+```{r echo=FALSE}
+variab <- c("Row.ID.O6G3A1.R6")
 
-```{r results="asis"}
-dfSummary(lidlcleaner,
-          plain.ascii  = FALSE, 
-          style        = "grid", 
-          graph.magnif = 0.75, 
-          valid.col    = FALSE,
-          tmp.img.dir  = "/tmp") 
-```
 
-```{r warning=FALSE, results="asis"}
-(stats_by_regions <- stby(data      = lidlcleaner, INDICES   = lidlcleaner$Region, FUN       = descr, stats     = "common", transpose = TRUE)) 
-```
+subset_data <- lidlcleaner[, !names(lidlcleaner) %in% variab]
 
-```{r}
-lidlcleaner%>%
-  descr(stats = "common") %>%
-  tb()
-```
 
-```{r}
-grouped_descr <- stby(data    = lidlcleaner,INDICES = lidlcleaner$Region, FUN     = descr, stats   = "common")
-
-grouped_descr %>% tb()
-
-```
-
-# Error in display
-
-```{r}
-stby(data    = lidlcleaner, 
-     INDICES = lidlcleaner$Region, 
-     FUN     = descr, 
-     stats   = "fivenum") %>%
+stby(data = subset_data, 
+     INDICES = subset_data$Region, 
+     FUN = descr, 
+     stats = "fivenum") %>%
   tb(order = 3) %>%
-  kable(format = "html", digits = 2) %>%
-  collapse_rows(columns = 1, valign = "top")
+  knitr::kable(format = "html", digits = 2) %>%
+  kable_styling(bootstrap_options = c("striped", "hover"))
 ```
 
-### Statistical Inference
+### Bivariate Analysis
 
-## Correlation testing
-```{r}
+## Correlation between each numerical variable
+
+```{r Identyfing Quantity as numerical value, include=FALSE}
+lidlcleaner$Quantity <- as.numeric(lidlcleaner$Quantity)
+```
+
+```{r echo=FALSE}
 ggcorrmat(
   data     = lidlcleaner,
   colors   = c("#B2182B", "white", "#4D4D4D"),
   title    = "Correlalogram for Numerical variables in the data set",
-  subtitle = "sleep units: hours; weight units: kilograms"
 )
 ```
+
+
+### Statistical Inference
 ## Test for independent samples
 
-```{r}
+```{r echo=FALSE}
 ggbetweenstats(
   data  = lidlcleaner,
   x     = Category,
@@ -298,7 +262,7 @@ ggbetweenstats(
 
 pvalue is near zero what indicates that the mean profit of categories of the products differ significantly
 
-```{r}
+```{r echo=FALSE}
 ggbetweenstats(
   data  = lidlcleaner,
   x     = Payment.Mode,
@@ -312,7 +276,7 @@ ggbetweenstats(
 
 pvalue is above the level of 0.05 what indicates that the payment mode does not differ in the amount of Profit made
 
-```{r}
+```{r echo=FALSE}
 grouped_gghistostats(
   data              = lidlcleaner,
   x                 = Profit,
@@ -330,7 +294,7 @@ grouped_gghistostats(
 )
 ```
 
-```{r}
+```{r echo=FALSE}
 Lidl2<-lidlcleaner%>%
   mutate(Returns1=ifelse(Returns==1,1,0))
 
@@ -345,7 +309,7 @@ ggbetweenstats(
 
 Pvalue not significant
 
-```{r}
+```{r echo=FALSE}
 Lidl2$Returns1 <- factor(Lidl2$Returns1,labels = c("No Returns","Returns"))
 ggpiestats(
   data         = Lidl2,
@@ -360,7 +324,7 @@ ggpiestats(
 
 There is a significant difference in number of returns made between regions as pvalue is below 0.05. There is also significant difference between regions as proportions of returns differ among them.
 
-```{r}
+```{r echo=FALSE}
 ggbarstats(
   data             = lidlcleaner,
   x                = Payment.Mode,
@@ -371,5 +335,3 @@ ggbarstats(
 
 )
 ```
-
-
