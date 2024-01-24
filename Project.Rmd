@@ -1,6 +1,8 @@
 ---
 title: "Project"
-output: html_document
+output:
+  html_document: default
+  pdf_document: default
 ---
 
 ```{r include=FALSE}
@@ -48,7 +50,6 @@ boxplot(Lidl$Sales, main = "Sales Outliers")
 
 ```
 
-
 ```{r}
   lidlclean <- Lidl %>% select(-ind1, -ind2) 
 
@@ -60,51 +61,49 @@ for (col in names(numeric_data)) {
 }
 ```
 
-
 ```{r}
 lidlcleaner <- lidlclean %>%
   mutate(Profit=imputate_outlier(lidlclean, Profit, method = "capping", cap_ntiles=c(0.1, 0.9), no_attrs = TRUE))
 summary(lidlcleaner)
 ```
 
-``` {r}
+```{r}
 boxplot(lidlcleaner$Profit)
 
 ```
 ```{r}
+lidlcleaner$Quantity <- as.numeric(lidlcleaner$Quantity)
+```
+```{r include=FALSE}
 lidlclean %>%
 count(Segment)
 ```
 
-```{r}
+```{r include=FALSE}
 lidlclean %>%
 count(State, sort = TRUE)
 ```
 
-```{r}
+```{r include=FALSE}
 lidlclean %>%
 count(Customer.Name, sort = TRUE)
 ```
 
 ```{r}
-  lidlclean <- Lidl %>% select(-ind1, -ind2)
-  ggplot(lidlclean, aes(x = Order.Date, y = Profit)) +
+  lidlcleaner <- Lidl %>% select(-ind1, -ind2)
+  ggplot(lidlcleaner, aes(x = Order.Date, y = Profit)) +
     geom_line()
   
 
 ```
 
-
-
-
-```{r} 
+```{r}
 lidlclean <- Lidl %>% select(-ind1, -ind2)
   ggplot(lidlclean, aes(x = Order.Date, y = Sales)) +
     geom_boxplot()
 ```
 
-
-```{r} 
+```{r include=FALSE}
 Lidl$State <- as.factor(Lidl$State)
 Lidl$Segment <- as.factor(Lidl$Segment)
 Lidl$Quantity <- factor(Lidl$Quantity,ordered=TRUE)
@@ -114,9 +113,8 @@ Lidl$Sales <- as.numeric(Lidl$Sales)
 print(Lidl)
 ```
 
-
-```{r tai, echo=TRUE} 
-tab1<-classIntervals(lidlcleaner$Profit,n=10,style="pretty")
+```{r tai, echo=FALSE, message=FALSE, warning=FALSE}
+tab1<-classIntervals(lidlcleaner$Profit,n=10,style="kmeans")
 jenks.tests(tab1)
 
 limits<-cut(lidlcleaner$Profit,seq(-40,70,by=11))
@@ -125,8 +123,7 @@ kbl(tabela1) %>%
   kable_material(c("striped", "hover"))
 ```
 
-
-```{r histogram}
+```{r histogram, message=FALSE, warning=FALSE}
 attach(Lidl)
 hist(lidlcleaner$Profit, breaks="FD", col="green", probability = TRUE,
      main="Lidl - profit",xlim=c(-40,70))
@@ -137,14 +134,13 @@ legend("topright", legend=c("Home Office", "Consumer", "Corporate"),
        col=c(2,3,4), lty=1:2, horiz=FALSE, box.lty=0, cex=0.8)
 ```
 
-
-
 ```{r}
 ggplot(data=lidlcleaner,aes(x=Profit)) +
   geom_histogram(bins=10) +
   facet_wrap(~Segment)
 ```
-``` {r}
+
+```{r echo=FALSE}
 lidlcleaner%>% 
 select(Category, Profit)%>% 
   ggplot(aes(x = factor(Category), y = Profit, fill = factor(Category))) +
@@ -175,7 +171,7 @@ select(Category, Profit)%>%
   ) +
 # Themes and Labels
   labs(
-    title = "RainCloud Plot",
+    title = "RainCloud Plot on profits made by the category of produc",
     x = "Product Category",
     y = "Profit",
     fill = "rooms"
@@ -186,24 +182,16 @@ select(Category, Profit)%>%
 
 
 
-
-
-```{r} 
-lidlclean <- Lidl %>% select(-ind1, -ind2)
-  ggplot(lidlclean, aes(x = Order.Date, y = Sales)) +
-    geom_boxplot()
-```
-
-```{r}
+```{r message=FALSE, warning=FALSE}
 lidlcleaner %>%
   select(State,Profit) %>%
   group_by(State)%>%
- dplyr::summarise(suma = sum(Profit)) %>%
- arrange(desc(suma))
+ dplyr::summarise(sum = sum(Profit)) %>%
+ arrange(desc(sum)) %>%
+    top_n(10) 
+
+
 ```
-
-
-
 
 ```{r facet1, echo=FALSE}
 plot1 <- ggplot(lidlcleaner, aes(Profit, Category)) + 
@@ -212,7 +200,7 @@ plot1 <- ggplot(lidlcleaner, aes(Profit, Category)) +
 plot1 + facet_wrap(~Segment)
 ```
 
-# Issue with kniting 
+# Issue with kniting
 
 ```{r kable_report2, echo=FALSE, message=FALSE, warning=FALSE}
 raport <-
@@ -237,18 +225,15 @@ kbl(tabela, digits = 2,
   caption="Table 1. Profit made in each of regions.(in $$$)") %>% kable_classic(full_width = F, html_font = "Cambria")%>% kable_styling(bootstrap_options = c("striped", "hover"))
 ```
 
-
-
 ```{r}
 lidlcleaner %>%
   select(Profit,State) %>%
   tbl_summary(label= Profit ~ "Profit",digits=c(Profit)~2,by=State,type = all_continuous() ~ "continuous2", statistic = all_continuous() ~ c("{N_nonmiss}", "{median} ({p25}, {p75})", "{min}, {max}"),missing = "no") 
 ```
 
-
 # No display
 
-```{r warning=FALSE, results="asis"}
+```{r results="asis"}
 dfSummary(lidlcleaner,
           plain.ascii  = FALSE, 
           style        = "grid", 
@@ -257,12 +242,9 @@ dfSummary(lidlcleaner,
           tmp.img.dir  = "/tmp") 
 ```
 
-
-```{r results="asis", warning=FALSE}
+```{r warning=FALSE, results="asis"}
 (stats_by_regions <- stby(data      = lidlcleaner, INDICES   = lidlcleaner$Region, FUN       = descr, stats     = "common", transpose = TRUE)) 
 ```
-
-
 
 ```{r}
 lidlcleaner%>%
@@ -270,16 +252,16 @@ lidlcleaner%>%
   tb()
 ```
 
-
 ```{r}
 grouped_descr <- stby(data    = lidlcleaner,INDICES = lidlcleaner$Region, FUN     = descr, stats   = "common")
 
 grouped_descr %>% tb()
 
 ```
+
 # Error in display
 
-```{r} 
+```{r}
 stby(data    = lidlcleaner, 
      INDICES = lidlcleaner$Region, 
      FUN     = descr, 
@@ -289,9 +271,19 @@ stby(data    = lidlcleaner,
   collapse_rows(columns = 1, valign = "top")
 ```
 
-
 ### Statistical Inference
+
+## Correlation testing
+```{r}
+ggcorrmat(
+  data     = lidlcleaner,
+  colors   = c("#B2182B", "white", "#4D4D4D"),
+  title    = "Correlalogram for Numerical variables in the data set",
+  subtitle = "sleep units: hours; weight units: kilograms"
+)
+```
 ## Test for independent samples
+
 ```{r}
 ggbetweenstats(
   data  = lidlcleaner,
@@ -303,6 +295,7 @@ ggbetweenstats(
 
 
 ```
+
 pvalue is near zero what indicates that the mean profit of categories of the products differ significantly
 
 ```{r}
@@ -311,11 +304,12 @@ ggbetweenstats(
   x     = Payment.Mode,
   y     = Profit,
   type= "np",
-  title = "Distribution of Profit among the payment"
+  title = "Distribution of Profit among the payment mode"
 )
 
 
 ```
+
 pvalue is above the level of 0.05 what indicates that the payment mode does not differ in the amount of Profit made
 
 ```{r}
@@ -332,7 +326,7 @@ grouped_gghistostats(
   ggtheme           = ggthemes::theme_tufte(),
   ## modify the defaults from `{ggstatsplot}` for each plot
   plotgrid.args     = list(nrow = 1),
-  annotation.args   = list(title = "Movies budgets for different genres")
+  annotation.args   = list(title = "Profit created by different segments of company")
 )
 ```
 
@@ -344,10 +338,11 @@ ggbetweenstats(
   data  = Lidl2,
   x     = Returns1,
   y     = Profit,
-  title = "Distribution of sepal length across Iris species"
+  title = "Distribution of profit made on the fact wether there were any returns made"
 )
 
 ```
+
 Pvalue not significant
 
 ```{r}
@@ -362,30 +357,19 @@ ggpiestats(
 
 
 ```
-There is a significant difference in number of returns made between regions as pvalue is below 0.05.
-There is also significant difference between regions as proportions of returns differ among them.
 
-
-
+There is a significant difference in number of returns made between regions as pvalue is below 0.05. There is also significant difference between regions as proportions of returns differ among them.
 
 ```{r}
 ggbarstats(
   data             = lidlcleaner,
   x                = Payment.Mode,
   y                = Region,
-  title            = "MPAA Ratings by Genre",
-  xlab             = "movie genre",
-  legend.title     = "MPAA rating",
+  title            = "Types of payment made based on different regions of USA",
+  xlab             = "Regions",
+  legend.title     = "Payment mode",
 
 )
 ```
 
 
-```{r}
-ggcorrmat(
-  data     = lidlcleaner,
-  colors   = c("#B2182B", "white", "#4D4D4D"),
-  title    = "Correlalogram for mammals sleep dataset",
-  subtitle = "sleep units: hours; weight units: kilograms"
-)
-```
